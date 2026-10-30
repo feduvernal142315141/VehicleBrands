@@ -19,8 +19,9 @@ public static class DependencyInjection
                 ?? throw new InvalidOperationException(
                     $"Falta la cadena de conexión 'ConnectionStrings:{ConnectionStringName}'.");
 
+            // Reintentos ante fallos transitorios, p. ej. el arranque en frío de Neon al reactivar la base.
             options
-                .UseNpgsql(connectionString)
+                .UseNpgsql(connectionString, npgsql => npgsql.EnableRetryOnFailure())
                 // Mecanismo oficial de seeding de EF Core: se ejecuta al final de Migrate/MigrateAsync.
                 .UseSeeding((context, _) => MarcasAutosSeeder.Seed(context))
                 .UseAsyncSeeding((context, _, cancellationToken) => MarcasAutosSeeder.SeedAsync(context, cancellationToken));
