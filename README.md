@@ -48,6 +48,30 @@ Ejemplo de respuesta (`200 OK`; `[]` si no hay marcas):
 ]
 ```
 
+## Swagger y health check
+
+Con Docker Compose, Swagger queda disponible en `http://localhost:8080/swagger` (documento OpenAPI en `/swagger/v1/swagger.json`); desde allí se puede ejecutar el endpoint con **Try it out → Execute**. Se habilita en Development o cuando `Swagger__Enabled=true`, sin necesidad de ejecutar la aplicación como Development.
+
+`GET /healthz` devuelve `200 Healthy` cuando la aplicación está lista. No consulta la base de datos: las migraciones se aplican antes de que el servidor acepte tráfico.
+
+## Despliegue en Render + Neon
+
+Servicio Docker con `Dockerfile Path = src/MarcasAutos.Api/Dockerfile`, `Docker Build Context = .` y `Health Check Path = /healthz`. Variables de entorno:
+
+| Variable | Valor |
+|---|---|
+| `ConnectionStrings__Postgres` | `Host=<host-directo>.neon.tech;Port=5432;Database=<db>;Username=<usuario>;Password=<password>;SSL Mode=VerifyFull` |
+| `Database__ApplyMigrationsOnStartup` | `true` |
+| `Swagger__Enabled` | `true` |
+| `PORT` | `8080` |
+
+Notas:
+
+- Npgsql no acepta URLs `postgresql://`; use el formato clave=valor anterior.
+- Use el host **directo** de Neon (sin `-pooler`): las migraciones usan bloqueos de sesión que no son compatibles con el pooler en modo transacción.
+- La imagen escucha en `0.0.0.0:8080` (`ASPNETCORE_HTTP_PORTS=8080`); ASP.NET Core no interpreta `PORT`, por lo que debe mantenerse en `8080` para que Render use el mismo puerto.
+- Con el plan gratuito, la primera petición tras la inactividad puede tardar mientras Render y Neon se reactivan; la API reintenta fallos transitorios de conexión.
+
 ## Ejecución local (sin Docker para la API)
 
 Requiere un PostgreSQL accesible (por ejemplo `docker compose up -d postgres`, que no publica el puerto; añada un mapeo `5432:5432` si lo necesita).
@@ -96,4 +120,5 @@ Usa Coverlet (MSBuild) con umbral del **70 % de líneas**: el comando falla si n
 | `ConnectionStrings__Postgres` | Cadena de conexión de la API (obligatoria) | Construida desde las variables siguientes |
 | `Database__ApplyMigrationsOnStartup` | Aplica migraciones y seed al iniciar | `true` |
 | `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` | Base de datos y credenciales de PostgreSQL | `marcas_autos` / `marcas_user` / `dev_only_change_me` |
+| `Swagger__Enabled` | Publica Swagger fuera de Development | `true` en Compose |
 | `API_PORT` | Puerto publicado de la API | `8080` |

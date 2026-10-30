@@ -2,6 +2,7 @@ using MarcasAutos.Api.Application.Services;
 using MarcasAutos.Api.Domain.Entities;
 using MarcasAutos.Api.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -20,10 +21,21 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
 
     public Type? ServiceReemplazado { get; init; }
 
+    /// <summary>Por defecto Production, como en Render; así se comprueba que Swagger no depende de Development.</summary>
+    public string Entorno { get; init; } = Environments.Production;
+
+    public bool? SwaggerHabilitado { get; init; }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         // Las migraciones son relacionales y no aplican a InMemory.
         builder.UseSetting("Database:ApplyMigrationsOnStartup", "false");
+        builder.UseEnvironment(Entorno);
+
+        if (SwaggerHabilitado is { } habilitado)
+        {
+            builder.UseSetting("Swagger:Enabled", habilitado.ToString());
+        }
 
         builder.ConfigureServices(services =>
         {

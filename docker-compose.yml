@@ -28,6 +28,8 @@ services:
       ConnectionStrings__Postgres: Host=postgres;Port=5432;Database=${POSTGRES_DB:-marcas_autos};Username=${POSTGRES_USER:-marcas_user};Password=${POSTGRES_PASSWORD:-dev_only_change_me};GSS Encryption Mode=Disable
       # Aplica migraciones y seed al iniciar.
       Database__ApplyMigrationsOnStartup: "true"
+      # El contenedor corre en Production; Swagger se habilita de forma explícita.
+      Swagger__Enabled: "true"
     ports:
       - "${API_PORT:-8080}:8080"
     networks:
